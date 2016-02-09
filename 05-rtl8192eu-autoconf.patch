@@ -1,0 +1,23 @@
+--- include/autoconf.h	2014-08-12 03:32:04.000000000 +0200
++++ include/autoconf.h	2016-02-08 14:46:50.000000000 +0100
+@@ -369,9 +369,9 @@
+ /*
+  * Debug Related Config
+  */
+-#define DBG	1
++#define DBG	0
+ 
+-#define CONFIG_DEBUG /* DBG_871X, etc... */
++//#define CONFIG_DEBUG /* DBG_871X, etc... */
+ //#define CONFIG_DEBUG_RTL871X /* RT_TRACE, RT_PRINT_DATA, _func_enter_, _func_exit_ */
+ 
+ #define CONFIG_PROC_DEBUG
+@@ -394,7 +394,7 @@
+ //#define DBG_RX_SEQ
+ //#define DBG_RX_SIGNAL_DISPLAY_PROCESSING
+ //#define DBG_RX_SIGNAL_DISPLAY_SSID_MONITORED "jeff-ap"
+-#define DBG_RX_SIGNAL_DISPLAY_RAW_DATA
++//#define DBG_RX_SIGNAL_DISPLAY_RAW_DATA
+ 
+ //#define DBG_TX_POWER_IDX
+ 

@@ -1,0 +1,20 @@
+--- os_dep/linux/os_intfs.c	2014-05-05 10:28:42.000000000 +0200
++++ os_dep/linux/os_initf.c	2016-02-08 17:24:39.000000000 +0100
+@@ -601,7 +601,7 @@
+ 	return dscp >> 5;
+ }
+ 
+-static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb)
++static u16 rtw_select_queue(struct net_device *dev, struct sk_buff *skb, void *accel_priv, select_queue_fallback_t fallback)
+ {
+ 	_adapter	*padapter = rtw_netdev_priv(dev);
+ 	struct mlme_priv *pmlmepriv = &padapter->mlmepriv;
+@@ -648,7 +648,7 @@
+ 
+ static int rtw_ndev_notifier_call(struct notifier_block * nb, unsigned long state, void *ndev)
+ {
+-	struct net_device *dev = ndev;
++	struct net_device *dev = netdev_notifier_info_to_dev(ndev);
+ 
+ #if (LINUX_VERSION_CODE>=KERNEL_VERSION(2,6,29))
+ 	if (dev->netdev_ops->ndo_do_ioctl != rtw_ioctl)

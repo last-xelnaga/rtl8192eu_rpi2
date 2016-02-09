@@ -1,0 +1,29 @@
+--- Makefile	2016-02-06 14:18:26.000000000 +0100
++++ Makefile	2016-02-08 14:57:06.000000000 +0100
+@@ -1,6 +1,6 @@
+ EXTRA_CFLAGS += $(USER_EXTRA_CFLAGS)
+-EXTRA_CFLAGS += -O1
+-#EXTRA_CFLAGS += -O3
++#EXTRA_CFLAGS += -O1
++EXTRA_CFLAGS += -O3
+ #EXTRA_CFLAGS += -Wall
+ #EXTRA_CFLAGS += -Wextra
+ #EXTRA_CFLAGS += -Werror
+@@ -14,6 +14,8 @@
+ EXTRA_CFLAGS += -Wno-unused-function
+ EXTRA_CFLAGS += -Wno-unused
+ 
++EXTRA_CFLAGS += -pipe -ffast-math -ftree-vectorize
++
+ #EXTRA_CFLAGS += -Wno-uninitialized
+ 
+ EXTRA_CFLAGS += -I$(src)/include
+@@ -63,7 +65,7 @@
+ ######### Notify SDIO Host Keep Power During Syspend ##########
+ CONFIG_RTW_SDIO_PM_KEEP_POWER = y
+ ###################### Platform Related #######################
+-CONFIG_PLATFORM_I386_PC = y
++CONFIG_PLATFORM_I386_PC = n
+ CONFIG_PLATFORM_ANDROID_X86 = n
+ CONFIG_PLATFORM_JB_X86 = n
+ CONFIG_PLATFORM_ARM_S3C2K4 = n
