@@ -43,7 +43,7 @@ else
 fi
 
 
-# get linux source, configure and compile
+# get linux source and configure
 if [ ! -d $WORKBENCH_LINUX ]; then
 	mkdir -p $WORKBENCH
 	cd $WORKBENCH
@@ -73,6 +73,12 @@ if [ ! -d $WORKBENCH_LINUX ]; then
 else
 	info "kernel already in place, skipping..."
 fi
+
+
+# get kernel version and flavor from .config file
+cd $WORKBENCH_LINUX
+KERNEL_VERSION=$(sed -n '3p' < .config | awk -F ' ' '{print $3}')
+info "we have kernel $KERNEL_VERSION"
 
 
 # compile kernel if needed
@@ -124,8 +130,19 @@ fi
 info "compile module..."
 cd $WORKBENCH_WIFI/$WIFI_SOURCE_FILE_NAME
 
+# configuration for the wifi module
+EXTRA_CFLAGS=-DCONFIG_LITTLE_ENDIAN 
+EXTRA_CFLAGS=$EXTRA_CFLAGS -DCONFIG_CONCURRENT_MODE
+EXTRA_CFLAGS=$EXTRA_CFLAGS -DCONFIG_IOCTL_CFG80211
+EXTRA_CFLAGS=$EXTRA_CFLAGS -DRTW_USE_CFG80211_STA_EVENT
+EXTRA_CFLAGS=$EXTRA_CFLAGS -DCONFIG_P2P_IPS
+EXTRA_CFLAGS=$EXTRA_CFLAGS -DCONFIG_QOS_OPTIMIZATION
+EXTRA_CFLAGS=$EXTRA_CFLAGS -DCONFIG_USE_USB_BUFFER_ALLOC_TX
+EXTRA_CFLAGS=$EXTRA_CFLAGS -DUSB_XMITBUF_ALIGN_SZ=1024
+EXTRA_CFLAGS=$EXTRA_CFLAGS -DUSB_PACKET_OFFSET_SZ=0
+
 make clean
-make ARCH=arm CROSS_COMPILE=$CROSS_GCC USER_EXTRA_CFLAGS=-DCONFIG_LITTLE_ENDIAN KSRC=$WORKBENCH_LINUX KSRV=4.1.17 modules
+make ARCH=arm CROSS_COMPILE=$CROSS_GCC USER_EXTRA_CFLAGS=$EXTRA_CFLAGS KSRC=$WORKBENCH_LINUX KSRV=$KERNEL_VERSION modules
 if [ "$?" -ne "0" ]; then
 	error "failed to compile wifi module"
 fi
