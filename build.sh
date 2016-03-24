@@ -38,6 +38,14 @@ if [ ! -d $WORKBENCH_TOOLS ]; then
 	if [ "$?" -ne "0" ]; then
 		error "failed to get tools"
 	fi
+
+    info "checkout old but stable version..."
+    cd $WORKBENCH_TOOLS
+	git checkout 3a413ca2b23fd275e8ddcc34f3f9fc3a4dbc723f
+	if [ "$?" -ne "0" ]; then
+		error "failed to checkout"
+	fi
+
 else
 	info "tools already in place, skipping..."
 fi
@@ -49,26 +57,22 @@ if [ ! -d $WORKBENCH_LINUX ]; then
 	cd $WORKBENCH
 
 	info "clone kernel source..."
-	git clone --depth=1 https://github.com/raspberrypi/linux
+	git clone https://github.com/raspberrypi/linux
 	if [ "$?" -ne "0" ]; then
 		error "failed to get kernel source"
 	fi
 
-	info "prepare old config..."
-	cp -a $SCRIPT_ROOT/config.gz $WORKBENCH_LINUX/config.gz
+	info "checkout old but stable version..."
 	cd $WORKBENCH_LINUX
-	zcat config.gz > .config
+	git checkout f4b20d47d7df7927967fcd524324b145cfc9e2f9
 	if [ "$?" -ne "0" ]; then
-		info "failed to configure old kernel, go for new one..."
-		make -j 12 ARCH=arm CROSS_COMPILE=$CROSS_GCC bcm2709_defconfig
-		if [ "$?" -ne "0" ]; then
-			error "failed to configure kernel"
-		fi
-	else
-		make -j 12 ARCH=arm CROSS_COMPILE=$CROSS_GCC oldconfig
-		if [ "$?" -ne "0" ]; then
-			error "failed to configure kernel"
-		fi
+		error "failed to finish checkout, abort"
+	fi
+
+	info "failed to configure old kernel, go for new one..."
+	make -j 12 ARCH=arm CROSS_COMPILE=$CROSS_GCC bcm2709_defconfig
+	if [ "$?" -ne "0" ]; then
+		error "failed to configure kernel"
 	fi
 else
 	info "kernel already in place, skipping..."
