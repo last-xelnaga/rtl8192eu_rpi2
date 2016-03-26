@@ -2,6 +2,11 @@
 
 function info()
 {
+	echo -e "\e[00;32m$*\e[00m" >&2 #green
+}
+
+function warn()
+{
 	echo -e "\e[00;35m$*\e[00m" >&2 #purple
 }
 
@@ -19,14 +24,23 @@ WORKBENCH=$SCRIPT_ROOT/workbench
 WORKBENCH_TOOLS=$WORKBENCH/tools
 WORKBENCH_LINUX=$WORKBENCH/linux
 WORKBENCH_WIFI=$WORKBENCH/wifi
+WORKBENCH_MNT=$WORKBENCH/mnt
 
 # wifi module specific names
 WIFI_BUNDLE_ZIP_FILE_NAME=20140812_DWA131_Linux_driver_v4.3.1.1.zip
 WIFI_SOURCE_FILE_NAME=20140812_rtl8192EU_linux_v4.3.1.1_11320
+WIFI_MODULE_NAME=8192eu.ko
+
+# kernel image name
+KERNEL=kernel7
 
 # toolchain specific params
 CROSS_GCC=$WORKBENCH_TOOLS/arm-bcm2708/gcc-linaro-arm-linux-gnueabihf-raspbian-x64/bin/arm-linux-gnueabihf-
 
+# sd card device name, for example /dev/sde
+# will be initialized by first parameter.
+#if empty, then installation will be skipped 
+SDCARD_DEVICE=${1}
 
 # get cross-compile tools
 if [ ! -d $WORKBENCH_TOOLS ]; then
@@ -82,7 +96,8 @@ fi
 # get kernel version and flavor from .config file
 cd $WORKBENCH_LINUX
 KERNEL_VERSION=$(sed -n '3p' < .config | awk -F ' ' '{print $3}')
-info "we have kernel $KERNEL_VERSION"
+KERNEL_VERSION_FLAVOR=$(cat .config | grep LOCALVERSION= | cut -d "=" -f 2 | sed -e 's/^"//'  -e 's/"$//')
+info "we have kernel $KERNEL_VERSION$KERNEL_VERSION_FLAVOR"
 
 
 # compile kernel if needed
@@ -154,5 +169,66 @@ fi
 
 # strip the module and copy to workbench
 make CROSS_COMPILE=$CROSS_GCC strip
-cp -a 8192eu.ko $WORKBENCH_WIFI/8192eu.ko
+cp -a $WIFI_MODULE_NAME $WORKBENCH_WIFI/$WIFI_MODULE_NAME
+if [ "$?" -ne "0" ]; then
+	warn "failed to copy wifi module"
+fi
+
+
+# post process. installation
+if [ -n "${SDCARD_DEVICE}" ]; then
+	if [ ! -d "$WORKBENCH_MNT/fat32" ]; then
+		mkdir -p $WORKBENCH_MNT/fat32
+		mkdir -p $WORKBENCH_MNT/ext4
+	fi
+
+	info "mount boot partition..."
+	sudo mount $SDCARD_DEVICE1 $WORKBENCH_MNT/fat32
+	if [ "$?" -ne "0" ]; then
+		error "failed to mount $SDCARD_DEVICE1"
+	fi
+
+	info "mount root partition..."
+	sudo mount $SDCARD_DEVICE2 $WORKBENCH_MNT/ext4
+	if [ "$?" -ne "0" ]; then
+		sudo umount $WORKBENCH_MNT/fat32
+		error "failed to mount $SDCARD_DEVICE2"
+	fi
+
+	info "install linux kernel modules..."
+	cd $WORKBENCH_LINUX
+	sudo make ARCH=arm CROSS_COMPILE=$CROSS_GCC INSTALL_MOD_PATH=$WORKBENCH_MNT/ext4 modules_install
+	if [ "$?" -ne "0" ]; then
+		sudo umount $WORKBENCH_MNT/fat32
+		sudo umount $WORKBENCH_MNT/ext4
+		error "failed to install linux kernel modules"
+	fi
+
+	info "install wifi module..."
+	cd $WORKBENCH_WIFI
+	sudo cp -a $WIFI_MODULE_NAME $WORKBENCH_MNT/ext4/lib/modules/$KERNEL_VERSION$KERNEL_VERSION_FLAVOR/linux/net/wireless/
+	if [ "$?" -ne "0" ]; then
+		warn "failed to install wifi module"
+	fi
+
+	info "backup old kernel..."
+	sudo cp -a $WORKBENCH_MNT/fat32/$KERNEL.img $WORKBENCH_MNT/fat32/$KERNEL-backup.img
+	if [ "$?" -ne "0" ]; then
+		warn "failed to backup old kernel"
+	fi
+
+	info "generate new one..."
+	sudo $WORKBENCH_LINUX/scripts/mkknlimg $WORKBENCH_LINUX/arch/arm/boot/zImage $WORKBENCH_MNT/fat32/$KERNEL.img
+
+	info "process overlay..."
+	sudo cp -a $WORKBENCH_LINUX/arch/arm/boot/dts/*.dtb $WORKBENCH_MNT/fat32/
+	sudo cp $WORKBENCH_LINUX/arch/arm/boot/dts/overlays/*.dtb* $WORKBENCH_MNT/fat32/overlays/
+	sudo cp $WORKBENCH_LINUX/arch/arm/boot/dts/overlays/README $WORKBENCH_MNT/fat32/overlays/
+
+	info "unmount all partitions..."
+	sudo umount $WORKBENCH_MNT/fat32
+	sudo umount $WORKBENCH_MNT/ext4
+else
+	warn "installation not needed. exit"
+fi
 

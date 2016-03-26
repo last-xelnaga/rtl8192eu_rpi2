@@ -1,8 +1,7 @@
-# rtl8192eu wifi driver for the Raspberry Pi 2
+## rtl8192eu wifi driver for the Raspberry Pi 2
 
 
-INTRO:
---------------
+### INTRO:
 This manual was created mostly for myself, since i've
 spent time once and do not want to waste it once again.
 I will be glad if it will be useful for someone else.
@@ -23,8 +22,7 @@ My goal was is to use it with Raspberry Pi2 device and
 Arch (preferably) linux.
 
 
-FILES:
---------------
+### FILES:
 - several patches for the **4.3.1.1_11320** driver to make
   it compilable for RPi2
 - **config.gz** is a kernel configuration file from my RPi2.
@@ -33,10 +31,9 @@ FILES:
 - **build.sh** is a bash script that will do the job.
 
 
-WORKFLOW:
---------------
+### WORKFLOW:
 - just store all files in one directory and execute
-	./build.sh
+>	./build.sh
 - script will try to fetch cross-compilation tools.
   you can use your own tools (just put them in tools
   directory) and update script with a correct prefix
@@ -49,28 +46,41 @@ WORKFLOW:
   driver, extract, patch and compile.
 - as a result there will be a module 8192eu.ko file in
   workbench/wifi directory
+- add a path of the mounted sdcard as a parameter and
+  script will try to copy kernel and fresh module
+>	./build.sh /dev/sde
+  i use Arch distro, so script assumes that sdcard has
+  two partitions: /boot - fat32 and /root - ext4. do not
+  use this option if you are not sure about partitions in
+  your favorite distro  
 
 
-PITFALLS:
---------------
+### PITFALLS:
 - in case of cross-compilation your build tree has to have
-  kernel headers with the same version as a kernel on your
+  kernel headers with the SAME version as a kernel on your
   target 
-- cross-compiler has to have the same version as a tools
+- cross-compiler has to have the SAME version as a toolchain
   that was used for kernel compilation. that's why it's
   very convenient to compile kernel and additional modules
   at the same time.
 - copy new module to your RPi2 and execute as root
-	depmod -a
+
+>	depmod -a
+
 - lsusb should show your wifi dongle as 2001:3319.
   only this PID:VID combination will kick the 8192eu
-  module off.
-	lsusb | grep D-Link
+  module.
+
+>	lsusb | grep D-Link
+
 - before wifi connection setup try to check the module
   status with lsmod. it should be in the list of the
   loaded kernel modules.
-	lsmod | grep 8192
+
+>	lsmod | grep 8192
+
 - in case of wpa_supplicant usage, please specify linux
   wireless driver (wext) implicitly.
-	wpa_supplicant -Dwext -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
+
+>	wpa_supplicant -Dwext -B -i wlan0 -c /etc/wpa_supplicant/wpa_supplicant-wlan0.conf
 
