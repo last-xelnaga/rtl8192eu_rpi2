@@ -25,15 +25,14 @@ Arch (preferably) linux.
 ### FILES:
 - several patches for the **4.3.1.1_11320** driver to make
   it compilable for RPi2
-- **config.gz** is a kernel configuration file from my RPi2.
-  could be used as a starting point for the kernel
-  compilation procedure
 - **build.sh** is a bash script that will do the job.
 
 
 ### WORKFLOW:
 - just store all files in one directory and execute
+
 >	./build.sh
+
 - script will try to fetch cross-compilation tools.
   you can use your own tools (just put them in tools
   directory) and update script with a correct prefix
@@ -48,7 +47,9 @@ Arch (preferably) linux.
   workbench/wifi directory
 - add a path of the mounted sdcard as a parameter and
   script will try to copy kernel and fresh module
+
 >	./build.sh /dev/sde
+
   i use Arch distro, so script assumes that sdcard has
   two partitions: /boot - fat32 and /root - ext4. do not
   use this option if you are not sure about partitions in
